@@ -3,34 +3,43 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const token = request.cookies.get('auth_token')?.value;
+  
+  // Public routes that don't require authentication
+  const publicPaths = ['/auth/login', '/auth/register'];
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+  
+  // Guest routes (don't require auth)
+  const isGuestPath = pathname.startsWith('/guest');
   
   // Protected routes that require authentication
   const protectedPaths = ['/dashboard', '/patients', '/providers', '/visits', '/video'];
-  
-  // Check if current path is protected
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
   
-  if (isProtectedPath) {
-    const token = request.cookies.get('auth_token')?.value;
-    
-    if (!token) {
-      // Redirect to login page
-      const url = request.nextUrl.clone();
-      url.pathname = '/auth/login';
-      url.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(url);
-    }
+  // If on auth page and already logged in, redirect to dashboard
+  if (isPublicPath && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
-
+  
+  // If on protected route without token, redirect to login
+  if (isProtectedPath && !token) {
+    const url = new URL('/auth/login', request.url);
+    url.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(url);
+  }
+  
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/patients/:path*',
-    '/providers/:path*',
-    '/visits/:path*',
-    '/video/:path*',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico
+     * - public files (images, etc)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
