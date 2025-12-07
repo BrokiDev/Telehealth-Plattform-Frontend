@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   
-  // Skip middleware for static files, API routes, and Next.js internals
+  // Skip middleware for static files, API routes, Next.js internals, and RSC requests
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    pathname.includes('.')
+    pathname.includes('.') ||
+    searchParams.has('_rsc') ||
+    request.headers.get('rsc') === '1'
   ) {
     return NextResponse.next();
   }
