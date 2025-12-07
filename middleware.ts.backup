@@ -10,13 +10,18 @@ const protectedRoutes = {
   '/video': ['admin', 'provider', 'patient'],
 } as const;
 
-const publicRoutes = ['/auth/login', '/auth/register', '/', '/about'];
+const publicRoutes = ['/auth/login', '/auth/register', '/', '/about', '/guest'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Allow guest routes
+  if (pathname.startsWith('/guest')) {
+    return NextResponse.next();
+  }
+  
   // Check if the route is public
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     return NextResponse.next();
   }
 
@@ -51,7 +56,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - static assets
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|_next).*)',
   ],
 };
