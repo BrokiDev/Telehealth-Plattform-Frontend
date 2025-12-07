@@ -5,10 +5,6 @@ const nextConfig: NextConfig = {
   // StrictMode causes components to mount/unmount twice in development
   reactStrictMode: false,
   
-  // Set the correct root directory to silence lockfile warning
-  turbopack: {
-    root: __dirname,
-  },
   // External packages for server components
   serverExternalPackages: [],
 };
