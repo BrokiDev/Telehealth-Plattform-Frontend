@@ -223,17 +223,19 @@ export function useVideoCall({ token, roomName, visitId, onDisconnect, onRoomCon
       localParticipant.tracks.forEach((publication) => {
         
         if (publication.track) {
-          // Stop the track
-          publication.track.stop();
-          
-          // Detach from any DOM elements
-          publication.track.detach().forEach((element: HTMLMediaElement) => {
-            element.srcObject = null;
-          });
+          // Stop the track (only for audio/video tracks, not data tracks)
+          if (publication.track.kind === 'audio' || publication.track.kind === 'video') {
+            publication.track.stop();
+            
+            // Detach from any DOM elements
+            publication.track.detach().forEach((element: HTMLMediaElement) => {
+              element.srcObject = null;
+            });
+          }
         }
         
         // Unpublish from room
-        if (publication.isPublished) {
+        if (publication.track) {
           localParticipant.unpublishTrack(publication.track);
         }
       });
