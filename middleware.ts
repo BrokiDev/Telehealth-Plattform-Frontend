@@ -3,29 +3,32 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('auth_token')?.value;
   
-  // Public routes that don't require authentication
-  const publicPaths = ['/auth/login', '/auth/register'];
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
-  
-  // Guest routes (don't require auth)
-  const isGuestPath = pathname.startsWith('/guest');
-  
-  // Protected routes that require authentication
-  const protectedPaths = ['/dashboard', '/patients', '/providers', '/visits', '/video'];
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
-  
-  // If on auth page and already logged in, redirect to dashboard
-  if (isPublicPath && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // Skip middleware for static files, API routes, and Next.js internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next();
   }
   
-  // If on protected route without token, redirect to login
+  const token = request.cookies.get('auth_token')?.value;
+  
+  // Protected routes that require authentication
+  const protectedPaths = ['/dashboard', '/patients', '/providers', '/visits'];
+  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+  
+  // If accessing protected route without token, redirect to login
   if (isProtectedPath && !token) {
     const url = new URL('/auth/login', request.url);
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
+  }
+  
+  // If accessing auth pages with valid token, redirect to dashboard
+  if (pathname.startsWith('/auth') && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
   return NextResponse.next();
@@ -33,13 +36,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico
-     * - public files (images, etc)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
