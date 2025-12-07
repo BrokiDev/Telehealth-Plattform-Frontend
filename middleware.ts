@@ -35,28 +35,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Here you would normally verify the JWT token and check roles
-    // For now, we'll trust the token exists and continue
-    // In a real implementation, you'd decode and verify the JWT
-    
-    try {
-      // TODO: Implement JWT verification and role checking
-      // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      // const userRole = decoded.role;
-      
-      // Check if user has required role for this route
-      // const requiredRoles = protectedRoutes[pathname as keyof typeof protectedRoutes];
-      // if (requiredRoles && !requiredRoles.includes(userRole)) {
-      //   return NextResponse.redirect(new URL('/unauthorized', request.url));
-      // }
-      
-      return NextResponse.next();
-    } catch (error) {
-      // Invalid token, redirect to login
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+    // Token exists, allow access
+    // TODO: Implement JWT verification and role checking in the future
+    return NextResponse.next();
   }
 
   return NextResponse.next();
